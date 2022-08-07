@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yeitany/k8s_net/graph"
@@ -33,30 +35,25 @@ func main() {
 	config, clientset := utils.GetKubeConfig()
 
 	http.HandleFunc("/graph", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Println("syncNodes")
+		log.Println("syncNodes")
 		entities = syncEnitities(clientset)
-		fmt.Println("syncConntrack")
+		log.Println("syncConntrack")
 		conntrackMeta = k8snet.SyncConntracks(clientset, config)
-		fmt.Println("parseConntrackMeta")
+		log.Println("parseConntrackMeta")
 		conntrackMetaParsed := k8snet.ParseConntrackMeta(conntrackMeta)
-		//fmt.Printf("%+v", entities)
-		//fmt.Printf("%+v", conntrackMetaParsed)
 
-		fmt.Println("graphviz")
+		log.Println("graphviz")
 		filename := graphviz(conntrackMetaParsed)
-		fmt.Println("commad")
+		log.Println("commad")
 		ouput, err := exec.Command("circo", "-Tpng", filename).Output()
+		defer func() {
+			os.Remove(filename)
+		}()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Printf("%v", err)
 		}
-		fmt.Println("writing results")
-		err = os.WriteFile(filename+".png", ouput, 0644)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Printf("%v", err)
-		}
-		fmt.Println("done")
+		log.Println("done")
 		w.WriteHeader(http.StatusOK)
 		w.Write(ouput)
 	})
@@ -98,10 +95,11 @@ func graphviz(edges map[string]graph.Edge) string {
 		}
 		s += fmt.Sprintf("\"%v\" -> \"%v\";\n", src.Format(), dst.Format())
 	}
+	filename := strconv.FormatInt(int64(time.Now().Unix()), 10)
 	s = fmt.Sprintf("digraph k8s_net \n{\n%v}", s)
-	err := os.WriteFile("dot", []byte(s), 0644)
+	err := os.WriteFile(filename, []byte(s), 0644)
 	if err != nil {
 		panic(err.Error())
 	}
-	return "dot"
+	return filename
 }
