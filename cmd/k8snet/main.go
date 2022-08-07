@@ -25,7 +25,7 @@ func main() {
 		Clientset: clientset,
 	}
 
-	http.HandleFunc("/graph", graphHandler.Handle)
+	http.HandleFunc("/graph", graphHandler.ServeHttp)
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})

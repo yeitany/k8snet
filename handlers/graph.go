@@ -23,7 +23,7 @@ type GraphHandler struct {
 	conntrackMeta []k8snet.Meta
 }
 
-func (h *GraphHandler) Handle(w http.ResponseWriter, req *http.Request) {
+func (h *GraphHandler) ServeHttp(w http.ResponseWriter, req *http.Request) {
 	log.Println("syncNodes")
 	h.entities = h.syncEnitities(h.Clientset)
 	log.Println("syncConntrack")
@@ -57,6 +57,7 @@ func (h *GraphHandler) syncEnitities(clientset *kubernetes.Clientset) map[string
 
 func (h *GraphHandler) graphviz(edges map[string]graph.Edge) string {
 	var s string
+	unregistedIPs := make([]string, 0)
 	for k := range edges {
 		var (
 			src graph.Node
@@ -67,20 +68,23 @@ func (h *GraphHandler) graphviz(edges map[string]graph.Edge) string {
 			src = graph.Node{
 				Name: "extrnal ip",
 			}
+			unregistedIPs = append(unregistedIPs, edges[k].Src)
 		}
 		if dst, ok = h.entities[edges[k].Dst]; !ok {
 			dst = graph.Node{
 				Name: "extrnal ip",
 			}
+			unregistedIPs = append(unregistedIPs, edges[k].Dst)
 		}
-		if src.Namespace == "kube-system" || dst.Namespace == "kube-system" {
-			continue
-		}
-		if src.Namespace == "gmp-system" || dst.Namespace == "gmp-system" {
-			continue
-		}
+		// if src.Namespace == "kube-system" || dst.Namespace == "kube-system" {
+		// 	continue
+		// }
+		// if src.Namespace == "gmp-system" || dst.Namespace == "gmp-system" {
+		// 	continue
+		// }
 		s += fmt.Sprintf("\"%v\" -> \"%v\";\n", src.Format(), dst.Format())
 	}
+	log.Printf("%v\n", unregistedIPs)
 	filename := strconv.FormatInt(int64(time.Now().Unix()), 10)
 	s = fmt.Sprintf("digraph k8s_net \n{\n%v}", s)
 	err := os.WriteFile(filename, []byte(s), 0644)
