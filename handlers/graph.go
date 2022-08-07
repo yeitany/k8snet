@@ -33,11 +33,11 @@ func (h *GraphHandler) Handle(w http.ResponseWriter, req *http.Request) {
 
 	log.Println("graphviz")
 	filename := h.graphviz(conntrackMetaParsed)
-	log.Println("commad")
-	ouput, err := exec.Command("circo", "-Tpng", filename).Output()
 	defer func() {
 		os.Remove(filename)
 	}()
+	log.Println("commad")
+	ouput, err := exec.Command("circo", "-Tpng", filename).Output()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Printf("%v", err)
