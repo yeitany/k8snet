@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -25,10 +27,14 @@ func main() {
 		Clientset: clientset,
 	}
 
+	port := flag.String("servePort", "8080", "serve port")
+	metricPort := flag.String("metricPort", "9001", "metric port")
+	flag.Parse()
+
 	http.HandleFunc("/graph", graphHandler.ServeHttp)
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	go http.ListenAndServe(":9001", promhttp.Handler())
-	http.ListenAndServe(":8080", nil)
+	go http.ListenAndServe(fmt.Sprintf(":%v", *metricPort), promhttp.Handler())
+	http.ListenAndServe(fmt.Sprintf(":%v", *port), nil)
 }
