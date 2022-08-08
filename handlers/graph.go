@@ -1,15 +1,14 @@
 package handlers
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"os/exec"
-	"strconv"
-	"time"
 
+	"github.com/goccy/go-graphviz"
 	"github.com/yeitany/k8s_net/graph"
+	k8snet_graph "github.com/yeitany/k8s_net/graph"
 	k8snet "github.com/yeitany/k8s_net/network"
 	"github.com/yeitany/k8s_net/utils"
 	"k8s.io/client-go/kubernetes"
@@ -17,34 +16,81 @@ import (
 )
 
 type GraphHandler struct {
-	Config        *rest.Config
-	Clientset     *kubernetes.Clientset
-	entities      map[string]graph.Node
-	conntrackMeta []k8snet.Meta
+	Config    *rest.Config
+	Clientset *kubernetes.Clientset
 }
 
 func (h *GraphHandler) ServeHttp(w http.ResponseWriter, req *http.Request) {
 	log.Println("syncNodes")
-	h.entities = h.syncEnitities(h.Clientset)
+	nodes := h.syncEnitities(h.Clientset)
 	log.Println("syncConntrack")
-	h.conntrackMeta = k8snet.SyncConntracks(h.Clientset, h.Config)
+	conntrackMeta := k8snet.SyncConntracks(h.Clientset, h.Config)
 	log.Println("parseConntrackMeta")
-	conntrackMetaParsed := k8snet.ParseConntrackMeta(h.conntrackMeta)
+	edges := k8snet.ParseConntrackMeta(conntrackMeta)
 
 	log.Println("graphviz")
-	filename := h.graphviz(conntrackMetaParsed)
-	defer func() {
-		os.Remove(filename)
-	}()
-	log.Println("commad")
-	ouput, err := exec.Command("circo", "-Tpng", filename).Output()
+
+	buf := h.generateGraph(nodes, edges)
+	w.WriteHeader(http.StatusOK)
+	w.Write(buf.Bytes())
+}
+
+func (h *GraphHandler) generateGraph(nodes map[string]k8snet_graph.Node, edges map[string]k8snet_graph.Edge) bytes.Buffer {
+	g := graphviz.New()
+	g.SetLayout(graphviz.CIRCO)
+	graph, err := g.Graph()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("%v", err)
+		log.Fatal(err)
+	}
+	defer func() {
+		if err := graph.Close(); err != nil {
+			log.Fatal(err)
+		}
+		g.Close()
+	}()
+	unrgistedNode := &k8snet_graph.Node{
+		Name: "external_ip",
+	}
+	for i := range edges {
+		var (
+			src k8snet_graph.Node
+			dst k8snet_graph.Node
+			ok  bool
+		)
+		if edges[i].Src == "" || edges[i].Dst == "" {
+			continue
+		}
+		if src, ok = nodes[edges[i].Src]; !ok {
+			src = *unrgistedNode
+		}
+		if dst, ok = nodes[edges[i].Dst]; !ok {
+			dst = *unrgistedNode
+		}
+		if src.CNode == nil {
+			src.CNode, err = graph.CreateNode(src.Format())
+			if err != nil {
+				log.Println(err.Error())
+			}
+		}
+		if dst.CNode == nil {
+			dst.CNode, err = graph.CreateNode(dst.Format())
+			if err != nil {
+				log.Println(err.Error())
+			}
+		}
+		_, err = graph.CreateEdge(fmt.Sprintf("%v:%v", src.Format(), dst.Format()), src.CNode, dst.CNode)
+		if err != nil {
+			log.Println(err.Error())
+		}
+
+	}
+
+	var buf bytes.Buffer
+	if err := g.Render(graph, graphviz.PNG, &buf); err != nil {
+		log.Fatal(err)
 	}
 	log.Println("done")
-	w.WriteHeader(http.StatusOK)
-	w.Write(ouput)
+	return buf
 }
 
 func (h *GraphHandler) syncEnitities(clientset *kubernetes.Clientset) map[string]graph.Node {
@@ -53,43 +99,4 @@ func (h *GraphHandler) syncEnitities(clientset *kubernetes.Clientset) map[string
 		entities[k] = svc
 	}
 	return entities
-}
-
-func (h *GraphHandler) graphviz(edges map[string]graph.Edge) string {
-	var s string
-	unregistedIPs := make([]string, 0)
-	for k := range edges {
-		var (
-			src graph.Node
-			dst graph.Node
-			ok  bool
-		)
-		if src, ok = h.entities[edges[k].Src]; !ok {
-			src = graph.Node{
-				Name: "extrnal ip",
-			}
-			unregistedIPs = append(unregistedIPs, edges[k].Src)
-		}
-		if dst, ok = h.entities[edges[k].Dst]; !ok {
-			dst = graph.Node{
-				Name: "extrnal ip",
-			}
-			unregistedIPs = append(unregistedIPs, edges[k].Dst)
-		}
-		// if src.Namespace == "kube-system" || dst.Namespace == "kube-system" {
-		// 	continue
-		// }
-		// if src.Namespace == "gmp-system" || dst.Namespace == "gmp-system" {
-		// 	continue
-		// }
-		s += fmt.Sprintf("\"%v\" -> \"%v\";\n", src.Format(), dst.Format())
-	}
-	log.Printf("%v\n", unregistedIPs)
-	filename := strconv.FormatInt(int64(time.Now().Unix()), 10)
-	s = fmt.Sprintf("digraph k8s_net \n{\n%v}", s)
-	err := os.WriteFile(filename, []byte(s), 0644)
-	if err != nil {
-		panic(err.Error())
-	}
-	return filename
 }

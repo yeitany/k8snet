@@ -1,12 +1,17 @@
 package graph
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/goccy/go-graphviz/cgraph"
+)
 
 type Node struct {
 	Name      string
 	Namespace string
 	Type      string
 	IP        string
+	CNode     *cgraph.Node
 }
 
 func (n *Node) Format() string {
