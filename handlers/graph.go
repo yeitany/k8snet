@@ -10,7 +10,7 @@ import (
 	"github.com/yeitany/k8s_net/graph"
 	k8snet_graph "github.com/yeitany/k8s_net/graph"
 	k8snet "github.com/yeitany/k8s_net/network"
-	"github.com/yeitany/k8s_net/utils"
+	"github.com/yeitany/k8s_net/workloads"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -94,8 +94,8 @@ func (h *GraphHandler) generateGraph(nodes map[string]k8snet_graph.Node, edges m
 }
 
 func (h *GraphHandler) syncEnitities(clientset *kubernetes.Clientset) map[string]graph.Node {
-	entities := utils.GetWorkloads(clientset)
-	for k, svc := range utils.GetServices(clientset) {
+	entities := workloads.GetWorkloads(clientset)
+	for k, svc := range workloads.GetServices(clientset) {
 		entities[k] = svc
 	}
 	return entities
