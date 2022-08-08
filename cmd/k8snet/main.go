@@ -29,12 +29,15 @@ func main() {
 
 	port := flag.String("servePort", "8080", "serve port")
 	metricPort := flag.String("metricPort", "9001", "metric port")
+	enableMetrics := flag.Bool("enableMetrics", true, "enable metrics")
 	flag.Parse()
 
 	http.HandleFunc("/graph", graphHandler.ServeHttp)
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	go http.ListenAndServe(fmt.Sprintf(":%v", *metricPort), promhttp.Handler())
+	if *enableMetrics {
+		go http.ListenAndServe(fmt.Sprintf(":%v", *metricPort), promhttp.Handler())
+	}
 	http.ListenAndServe(fmt.Sprintf(":%v", *port), nil)
 }
