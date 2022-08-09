@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/goccy/go-graphviz"
 	"github.com/yeitany/k8s_net/graph"
@@ -21,18 +22,30 @@ type GraphHandler struct {
 }
 
 func (h *GraphHandler) ServeHttp(w http.ResponseWriter, req *http.Request) {
-	log.Println("syncNodes")
-	nodes := h.syncEnitities(h.Clientset)
-	log.Println("syncConntrack")
-	conntrackMeta := k8snet.SyncConntracks(h.Clientset, h.Config)
-	log.Println("parseConntrackMeta")
-	edges := k8snet.ParseConntrackMeta(conntrackMeta)
+	start := time.Now()
+	nodesChan := make(chan map[string]graph.Node, 1)
+	conntrackMetaChan := make(chan map[string]graph.Edge, 1)
 
+	log.Println("syncNodes")
+	go func() {
+		nodesChan <- h.syncEnitities(h.Clientset)
+	}()
+
+	go func() {
+		log.Println("syncConntrack")
+		conntrackMeta := k8snet.SyncConntracks(h.Clientset, h.Config)
+		log.Println("parseConntrackMeta")
+		conntrackMetaChan <- k8snet.ParseConntrackMeta(conntrackMeta)
+	}()
+
+	nodes := <-nodesChan
+	edges := <-conntrackMetaChan
 	log.Println("graphviz")
 
 	buf := h.generateGraph(nodes, edges)
 	w.WriteHeader(http.StatusOK)
 	w.Write(buf.Bytes())
+	log.Printf("execution time in seconds:%v\n", time.Since(start).Seconds())
 }
 
 func (h *GraphHandler) generateGraph(nodes map[string]k8snet_graph.Node, edges map[string]k8snet_graph.Edge) bytes.Buffer {

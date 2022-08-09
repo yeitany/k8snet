@@ -1,0 +1,5 @@
+# k8snet
+
+This service will allow to visualize your k8s cluster network.
+
+It maps all the communications between services and pods and outputs a png graph. 
