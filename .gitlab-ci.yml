@@ -43,6 +43,9 @@ build-job:       # This job runs in the build stage, which runs first.
 
 build-image:
   stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
   dependencies:
     - build-job
   script:
