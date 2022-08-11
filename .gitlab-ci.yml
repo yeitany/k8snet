@@ -50,7 +50,7 @@ build-image:
     - build-job
   script:
     - echo "Deploying application..."
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN$ CI_REGISTRY
     - docker build -t $CI_REGISTRY/ybot/k8snet:latest .
     - docker push $CI_REGISTRY/ybot/k8snet:latest
     - echo "Compile complete."
