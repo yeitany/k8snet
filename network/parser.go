@@ -33,7 +33,7 @@ func ParseConntrackMeta(conntrackMeta []Meta) map[string]graph.Edge {
 	return edges
 }
 
-func SyncConntracks(clientset *kubernetes.Clientset, config *rest.Config) []Meta {
+func SyncConntracks(clientset *kubernetes.Clientset, config *rest.Config) ([]Meta, error) {
 	kubeProxyPods := utils.GetKubeProxyPods(clientset)
 	conntrackMeta := make([]Meta, 0)
 	for _, pod := range kubeProxyPods.Items {
@@ -55,7 +55,7 @@ func SyncConntracks(clientset *kubernetes.Clientset, config *rest.Config) []Meta
 
 		exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
 		if err != nil {
-			panic(err.Error())
+			return nil, err
 		}
 		var stdout, stderr bytes.Buffer
 		err = exec.Stream(remotecommand.StreamOptions{
@@ -65,14 +65,14 @@ func SyncConntracks(clientset *kubernetes.Clientset, config *rest.Config) []Meta
 			Tty:    false,
 		})
 		if err != nil {
-			panic(err.Error())
+			return nil, err
 		}
 		var x Conntrack
 		err = xml.Unmarshal(stdout.Bytes(), &x)
 		if err != nil {
-			panic(err.Error())
+			return nil, err
 		}
 		conntrackMeta = append(conntrackMeta, x.Flow.Meta...)
 	}
-	return conntrackMeta
+	return conntrackMeta, nil
 }
