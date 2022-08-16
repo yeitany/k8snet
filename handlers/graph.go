@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/goccy/go-graphviz"
 	"github.com/yeitany/k8s_net/components"
 	k8snet_graph "github.com/yeitany/k8s_net/graph"
 	k8snet "github.com/yeitany/k8s_net/network"
@@ -20,15 +21,17 @@ type GraphHandler struct {
 }
 
 type UrlParmeters struct {
-	BlacklistNamespaces []string `json:"blacklist_namespaces"`
-	WhitelistNamespaces []string `json:"whitelist_namespaces"`
-	Targets             []string `json:"targets"`
-	Format              string   `json:"format"`
-	Layout              string   `json:"layout"`
+	BlacklistNamespaces []string        `json:"blacklist_namespaces"`
+	WhitelistNamespaces []string        `json:"whitelist_namespaces"`
+	Targets             []string        `json:"targets"`
+	Format              graphviz.Format `json:"format"`
+	Layout              graphviz.Layout `json:"layout"`
 }
 
 func (h *GraphHandler) ServeHttp(w http.ResponseWriter, req *http.Request) {
 	start := time.Now()
+
+	//ctx := req.Context()
 
 	urlParsed, err := parseUrl(req, w)
 	if err != nil {
@@ -37,6 +40,9 @@ func (h *GraphHandler) ServeHttp(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	log.Printf("%+v", urlParsed)
+
+	//ctx = context.WithValue(ctx, "parameters", urlParsed)
+	//ctx, cancelFunc := context.WithCancel(ctx)
 
 	nodes, err := components.GetComponents(h.Clientset)
 	if err != nil {
@@ -68,7 +74,10 @@ func parseUrl(req *http.Request, w http.ResponseWriter) (*UrlParmeters, error) {
 	if err != nil {
 		return nil, err
 	}
-	var u UrlParmeters
+	var u UrlParmeters = UrlParmeters{
+		Layout: graphviz.CIRCO,
+		Format: graphviz.PNG,
+	}
 	qMarshal, err := json.Marshal(qMap)
 	if err != nil {
 		return nil, err

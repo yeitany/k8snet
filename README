@@ -1,5 +1,10 @@
 # k8snet
+Web server that ouputs a graph that visualize the cluster network.
 
-This service will allow to visualize your k8s cluster network.
+## Ouput Example:
+![alt text](https://github.com/yeitany/k8snet/blob/master/output_example.png?raw=true)
 
-It maps all the communications between services and pods and outputs a png graph. 
+## Installation:
+Possible to run locally using binary or from source.
+
+helm chart installation (soon)
