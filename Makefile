@@ -5,8 +5,8 @@ lint:
 	go vet ./...
 
 build_path=./.bin/
-build-images:
+build-binaries:
 	GOOS=linux GOARC=amd64 go build -o $(build_path)/main ./cmd/k8snet/main.go
 
 build-charts:
-	helm package k8snet
+	helm package charts/k8snet
