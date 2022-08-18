@@ -1,5 +1,5 @@
 # k8snet
-Web server that ouputs a graph that visualize the cluster network.
+Web server that ouputs a graph of kubernetes cluster network.
 
 ## Ouput Example:
 ![alt text](https://raw.githubusercontent.com/yeitany/k8snet/master/docs/images/output_example.png)

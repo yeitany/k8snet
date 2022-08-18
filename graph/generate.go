@@ -2,15 +2,19 @@ package graph
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 
 	"github.com/goccy/go-graphviz"
+	"github.com/yeitany/k8s_net/utils"
 )
 
-func GenerateGraph(nodes map[string]Node, edges map[string]Edge) (*bytes.Buffer, error) {
+func GenerateGraph(ctx context.Context, nodes map[string]Node, edges map[string]Edge) (*bytes.Buffer, error) {
+	parameters := ctx.Value(utils.CtxKey("asd")).(utils.UrlParmeters)
+
 	g := graphviz.New()
-	g.SetLayout(graphviz.CIRCO)
+	g.SetLayout(parameters.Layout)
 	graph, err := g.Graph()
 	if err != nil {
 		return nil, err
@@ -21,9 +25,11 @@ func GenerateGraph(nodes map[string]Node, edges map[string]Edge) (*bytes.Buffer,
 		}
 		g.Close()
 	}()
+
 	unrgistedNode := &Node{
 		Name: "external_ip",
 	}
+
 	for i := range edges {
 		var (
 			src Node
@@ -59,7 +65,7 @@ func GenerateGraph(nodes map[string]Node, edges map[string]Edge) (*bytes.Buffer,
 	}
 
 	var buf bytes.Buffer
-	if err := g.Render(graph, graphviz.PNG, &buf); err != nil {
+	if err := g.Render(graph, parameters.Format, &buf); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("done")
