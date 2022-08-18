@@ -26,7 +26,10 @@ build-job:       # This job runs in the build stage, which runs first.
     - make build-binaries
 
 build-charts:
-  image: alpine/helm
+  image: 
+    name: alpine/helm:latest
+    entrypoint:
+      - ""
   artifacts:
     paths:
       - .charts/
