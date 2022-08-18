@@ -23,7 +23,15 @@ build-job:       # This job runs in the build stage, which runs first.
       - .bin/
   stage: build
   script:
-    - make build
+    - make build-images
+
+# build-chart:
+#   artifcat:
+#     path:
+#       - .charts/
+#   stage: build
+#   script:
+#     - make build-charts
 
 build-image:
   stage: push
@@ -40,3 +48,10 @@ build-image:
     - docker push $CI_REGISTRY_IMAGE
     - echo "Compile complete."
 
+# build-chart:
+#   stage: push
+#   image: curlimages/curl:latest
+#   dependencies:
+#     - build-charts
+#   script: 
+#     - 'curl --request POST --user gitlab-ci-token:$CI_JOB_TOKEN --form "chart=@./k8snet-0.1.0.tgz" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/api/stable/charts"'

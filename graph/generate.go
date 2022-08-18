@@ -3,6 +3,7 @@ package graph
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -11,8 +12,11 @@ import (
 )
 
 func GenerateGraph(ctx context.Context, nodes map[string]Node, edges map[string]Edge) (*bytes.Buffer, error) {
-	parameters := ctx.Value(utils.CtxKey("asd")).(utils.UrlParmeters)
-
+	parametersValue := ctx.Value(utils.CtxKey("parameters"))
+	if parametersValue == nil {
+		return nil, errors.New("failed to read parameters")
+	}
+	parameters := parametersValue.(utils.UrlParmeters)
 	g := graphviz.New()
 	g.SetLayout(parameters.Layout)
 	graph, err := g.Graph()
@@ -44,6 +48,9 @@ func GenerateGraph(ctx context.Context, nodes map[string]Node, edges map[string]
 		}
 		if dst, ok = nodes[edges[i].Dst]; !ok {
 			dst = *unrgistedNode
+		}
+		if !parameters.IsInTarget(src.Namespace) && !parameters.IsInTarget(dst.Namespace) {
+			continue
 		}
 		if src.CNode == nil {
 			src.CNode, err = graph.CreateNode(src.Format())

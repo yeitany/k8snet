@@ -1,6 +1,8 @@
 package utils
 
-import "github.com/goccy/go-graphviz"
+import (
+	"github.com/goccy/go-graphviz"
+)
 
 var allowedFormat []graphviz.Format = []graphviz.Format{
 	graphviz.XDOT,
@@ -21,11 +23,9 @@ var allowedLayout []graphviz.Layout = []graphviz.Layout{
 }
 
 type UrlParmeters struct {
-	BlacklistNamespaces []string        `json:"blacklist_namespaces"`
-	WhitelistNamespaces []string        `json:"whitelist_namespaces"`
-	Targets             []string        `json:"targets"`
-	Format              graphviz.Format `json:"format"`
-	Layout              graphviz.Layout `json:"layout"`
+	Targets []string        `json:"targets"`
+	Format  graphviz.Format `json:"format"`
+	Layout  graphviz.Layout `json:"layout"`
 }
 
 func (u *UrlParmeters) isLayoutValid() bool {
@@ -48,6 +48,18 @@ func (u *UrlParmeters) isFormatValid() bool {
 
 func (u *UrlParmeters) IsValid() bool {
 	return u.isFormatValid() && u.isLayoutValid()
+}
+
+func (u *UrlParmeters) IsInTarget(test string) bool {
+	if len(u.Targets) == 0 {
+		return true
+	}
+	for i := range u.Targets {
+		if test == u.Targets[i] {
+			return true
+		}
+	}
+	return false
 }
 
 type CtxKey string

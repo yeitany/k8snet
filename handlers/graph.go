@@ -43,7 +43,7 @@ func (h *GraphHandler) ServeHttp(w http.ResponseWriter, req *http.Request) {
 	}
 	log.Printf("%+v", urlParsed)
 
-	ctx = context.WithValue(ctx, utils.CtxKey("asd"), *urlParsed)
+	ctx = context.WithValue(ctx, utils.CtxKey("parameters"), *urlParsed)
 	resultCh := make(chan *bytes.Buffer, 1)
 
 	var wg sync.WaitGroup
@@ -106,14 +106,10 @@ func parseUrl(req *http.Request) (*utils.UrlParmeters, error) {
 	layout := convertor(qMap, "layout", []string{string(graphviz.CIRCO)}).([]string)[0]
 	format := convertor(qMap, "format", []string{string(graphviz.PNG)}).([]string)[0]
 	targets := convertor(qMap, "targets", []string{}).([]string)
-	blacklist := convertor(qMap, "blacklist", []string{}).([]string)
-	whitelist := convertor(qMap, "whitelist", []string{}).([]string)
 	var u utils.UrlParmeters = utils.UrlParmeters{
-		Layout:              graphviz.Layout(layout),
-		Format:              graphviz.Format(format),
-		Targets:             targets,
-		BlacklistNamespaces: blacklist,
-		WhitelistNamespaces: whitelist,
+		Layout:  graphviz.Layout(layout),
+		Format:  graphviz.Format(format),
+		Targets: targets,
 	}
 	if !u.IsValid() {
 		return nil, errors.New("not valid")
