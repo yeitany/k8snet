@@ -32,7 +32,7 @@ build-charts:
       - ""
   artifacts:
     paths:
-      - .charts/
+      - ./k8snet-0.1.0.tgz
   stage: build
   script:
     - helm package charts/k8snet
