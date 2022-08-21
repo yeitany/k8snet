@@ -26,13 +26,16 @@ build-job:       # This job runs in the build stage, which runs first.
     - make build-binaries
 
 build-charts:
-  image: alpine/helm
+  image: 
+    name: alpine/helm:latest
+    entrypoint:
+      - ""
   artifacts:
     paths:
-      - .charts/
+      - ./k8snet-0.1.0.tgz
   stage: build
   script:
-    - make build-charts
+    - helm package charts/k8snet
 
 build-image:
   stage: push
