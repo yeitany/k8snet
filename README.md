@@ -18,3 +18,4 @@ Request Parameters
 |--|--|--|
 |format|svg,png,jpg,dot|png
 |layout|circo,dot,fdp,neato,osage,patchwork,sfdp,twopi|circo
+|targets|cluster namespaces|empty
