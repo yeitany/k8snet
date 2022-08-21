@@ -9,22 +9,12 @@ Possible to run locally using binary or from source.
 
 helm chart installation (soon)
 
+## Usage
 
-|Supported Graph Formats|
-|----------|
- svg
- png 
- jpg 
- dot
+### GET /graph
+Request Parameters
 
-
-|Supported Graph Layouts|
-|----------|
- circo
- dot
- fdp
- neato
- osage
- patchwork
- sfdp
- twopi
+|Request Parameter|Allowed Values|Default|
+|--|--|--|
+|format|svg,png,jpg,dot|png
+|layout|circo,dot,fdp,neato,osage,patchwork,sfdp,twopi|circo
