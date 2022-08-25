@@ -1,13 +1,11 @@
 # k8snet
-Web server that ouputs a graph of kubernetes cluster network.
+Discover your kubernetes cluster topology using simple web server
 
 ## Output Example:
 ![alt text](https://raw.githubusercontent.com/yeitany/k8snet/master/docs/images/output_example.png)
 
 ## Installation:
-Possible to run locally using binary or from source.
-
-helm chart installation (soon)
+From source
 
 ## Usage
 
