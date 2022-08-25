@@ -1,7 +1,7 @@
 # k8snet
 Web server that ouputs a graph of kubernetes cluster network.
 
-## Ouput Example:
+## Output Example:
 ![alt text](https://raw.githubusercontent.com/yeitany/k8snet/master/docs/images/output_example.png)
 
 ## Installation:
